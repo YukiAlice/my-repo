@@ -52,6 +52,7 @@ class Game extends React.Component {
       }],
       stepNumber: 0,
       nextNum: 1,
+      isStarted: false,
     };
   }
 
@@ -59,7 +60,7 @@ class Game extends React.Component {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
-    if (squares[i]) {
+    if (squares[i] || !this.state.isStarted) {
       return;
     }
     squares[i] = this.state.nextNum;
@@ -77,6 +78,16 @@ class Game extends React.Component {
       stepNumber: step,
       nextNum: step + 1,
     });
+  }
+
+  handleStartGameBtnClick() {
+    this.setState({
+      isStarted: true,
+    });
+  }
+
+  handleTryAgainBtnClick() {
+    this.jumpTo(0);
   }
 
   render() {
@@ -101,7 +112,11 @@ class Game extends React.Component {
     if (win) {
       status = 'Congratulations!';
     } else {
-      status = 'Next number: ' + this.state.nextNum;
+      if (this.state.nextNum < 10) {
+        status = 'Next number: ' + this.state.nextNum;
+      } else {
+        status = 'Game Over'
+      }
     }
 
     return (
@@ -115,6 +130,10 @@ class Game extends React.Component {
         <div className="game-info">
           <div>{intro}</div>
           <div>{status}</div>
+          <div>
+            <button className="start-game-btn" onClick={() => this.handleStartGameBtnClick()}>Game Start</button>
+            <button className="try-again-btn" onClick={() => this.handleTryAgainBtnClick()}>Try Again</button>
+          </div>
           <ol>{moves}</ol>
         </div>
       </div>
