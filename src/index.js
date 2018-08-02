@@ -53,6 +53,7 @@ class Game extends React.Component {
       stepNumber: 0,
       nextNum: 1,
       isStarted: false,
+      textForGameStartBtn: 'Game Start',
     };
   }
 
@@ -81,13 +82,14 @@ class Game extends React.Component {
   }
 
   handleStartGameBtnClick() {
-    this.setState({
-      isStarted: true,
-    });
-  }
-
-  handleTryAgainBtnClick() {
-    this.jumpTo(0);
+    if (!this.state.isStarted) {
+      this.setState({
+        isStarted: true,
+        textForGameStartBtn: 'Try Again',
+      });
+    } else {
+      this.jumpTo(0);
+    }
   }
 
   render() {
@@ -131,8 +133,7 @@ class Game extends React.Component {
           <div>{intro}</div>
           <div>{status}</div>
           <div>
-            <button className="start-game-btn" onClick={() => this.handleStartGameBtnClick()}>Game Start</button>
-            <button className="try-again-btn" onClick={() => this.handleTryAgainBtnClick()}>Try Again</button>
+            <button className="start-game-btn" onClick={() => this.handleStartGameBtnClick()}>{this.state.textForGameStartBtn}</button>
           </div>
           <ol>{moves}</ol>
         </div>
