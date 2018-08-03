@@ -54,6 +54,7 @@ class Game extends React.Component {
       nextNum: 1,
       isStarted: false,
       textForGameStartBtn: 'Game Start',
+      second: 0,
     };
   }
 
@@ -61,6 +62,9 @@ class Game extends React.Component {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
+    if (!this.state.second && this.state.isStarted) {
+      this.interval = setInterval(() => this.countTime(), 1000);
+    }
     if (squares[i] || !this.state.isStarted) {
       return;
     }
@@ -88,8 +92,18 @@ class Game extends React.Component {
         textForGameStartBtn: 'Try Again',
       });
     } else {
+      this.setState({
+        second: 0,
+      });
+      clearInterval(this.interval);
       this.jumpTo(0);
     }
+  }
+
+  countTime() {
+    this.setState({
+      second: this.state.second + 1,
+    });
   }
 
   render() {
@@ -132,6 +146,7 @@ class Game extends React.Component {
         <div className="game-info">
           <div>{intro}</div>
           <div>{status}</div>
+          <div>Time: {this.state.second} s</div>
           <div>
             <button className="start-game-btn" onClick={() => this.handleStartGameBtnClick()}>{this.state.textForGameStartBtn}</button>
           </div>
