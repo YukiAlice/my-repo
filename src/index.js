@@ -62,9 +62,6 @@ class Game extends React.Component {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
-    if (!this.state.second && this.state.isStarted) {
-      this.interval = setInterval(() => this.countTime(), 1000);
-    }
     if (squares[i] || !this.state.isStarted) {
       return;
     }
@@ -87,17 +84,29 @@ class Game extends React.Component {
 
   handleStartGameBtnClick() {
     if (!this.state.isStarted) {
-      this.setState({
-        isStarted: true,
-        textForGameStartBtn: 'Try Again',
-      });
-    } else {
-      this.setState({
-        second: 0,
-      });
-      clearInterval(this.interval);
-      this.jumpTo(0);
+      this.prepareNewGame();
     }
+    this.startNewGame();
+  }
+
+  prepareNewGame() {
+    this.setState({
+      isStarted: true,
+      textForGameStartBtn: 'Try Again',
+    });
+  }
+
+  startNewGame() {
+    this.setState({
+      second: 0,
+    });
+    this.startTimer();
+    this.jumpTo(0);
+    //TODO this.askForUserName();
+  }
+
+  startTimer() {
+    this.interval = setInterval(() => this.countTime(), 1000);
   }
 
   countTime() {
@@ -127,11 +136,13 @@ class Game extends React.Component {
     let status;
     if (win) {
       status = 'Congratulations!';
+      clearInterval(this.interval);
     } else {
       if (this.state.nextNum < 10) {
         status = 'Next number: ' + this.state.nextNum;
       } else {
-        status = 'Game Over'
+        status = 'Game Over';
+        clearInterval(this.interval);
       }
     }
 
@@ -182,6 +193,33 @@ function calculateFifteen(squares) {
   }
   return isWin;
 }
+
+/*
+计时逻辑
+  1、第一次点击，状态：false，行为：改状态为true，开始计时
+  2、第二/n次点击（游戏没有结束），状态：true，行为：重新计时
+  3、第二/n次点击（游戏已结束），状态：false，行为：改状态为true，开始计时
+实际归类为2类
+  1、游戏结束状态（false）点击：改状态为true，开始计时
+  2、游戏进行状态（true）点击：重新计时
+归纳为代码
+  if (false) {
+   改为true
+  }    
+  开始计时()
+框架
+  if (游戏结束状态) {
+    准备游戏开始所要准备的一切(按钮文字啊，分数清零啊等等)
+  }
+  开始游戏(开始或者重新开始计时，输入玩家姓名等等)
+
+  if (!this.state.isStarted) {
+    this.prepareNewGame()
+  }
+  this.startNewGame()
+
+可以用//TODO 记录暂时缺少的部分
+*/
 
 // ========================================
 
