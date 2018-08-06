@@ -50,6 +50,7 @@ class Game extends React.Component {
       history: [{
         squares: Array(9).fill(null)
       }],
+      record: [{ second: 0 }],   //用于记录历史计时
       stepNumber: 0,
       nextNum: 1,
       isStarted: false,
@@ -97,21 +98,33 @@ class Game extends React.Component {
   }
 
   startNewGame() {
-    this.setState({
-      second: 0,
-    });
+    //每次开始新游戏之前需停止计时，否则将会一直暗中计时
+    clearInterval(this.interval);
     this.startTimer();
     this.jumpTo(0);
     //TODO this.askForUserName();
   }
 
+  //开始计时
   startTimer() {
+    this.setState({
+      second: 0,
+    });
     this.interval = setInterval(() => this.countTime(), 1000);
   }
 
   countTime() {
     this.setState({
       second: this.state.second + 1,
+    });
+  }
+
+  //把当前计时记入计时数组
+  recordTime(record) {
+    this.setState({
+      record: record.concat([{
+        second: this.state.second,
+      }]),
     });
   }
 
@@ -137,14 +150,25 @@ class Game extends React.Component {
     if (win) {
       status = 'Congratulations!';
       clearInterval(this.interval);
+      this.recordTime(this.state.record);
+      rankTime(this.state.record);
     } else {
       if (this.state.nextNum < 10) {
         status = 'Next number: ' + this.state.nextNum;
       } else {
         status = 'Game Over';
         clearInterval(this.interval);
+        this.recordTime(this.state.record);
+        rankTime(this.state.record);
       }
     }
+
+    const rank = this.state.record.map((second) => {
+      const ranking = second + 's';
+      return (
+        <li key={second}>{ranking}</li>
+      );
+    });
 
     return (
       <div className="game">
@@ -163,6 +187,10 @@ class Game extends React.Component {
           </div>
           <ol>{moves}</ol>
         </div>
+        <div>
+          <li>排行榜</li>
+          <ol>{rank}</ol>
+        </div>
       </div>
     );
   }
@@ -179,7 +207,7 @@ function calculateFifteen(squares) {
     [0, 4, 8],
     [2, 4, 6]
   ];
-  let isWin = true;//default win
+  let isWin = true;  //因为胜利条件比较苛刻，默认状态为胜利
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
     if (squares[a] && squares[b] && squares[c]) {
@@ -192,6 +220,11 @@ function calculateFifteen(squares) {
     }
   }
   return isWin;
+}
+
+//将历史计时进行排序的函数
+function rankTime(record) {
+
 }
 
 /*
