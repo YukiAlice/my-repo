@@ -59,7 +59,13 @@ class Game extends React.Component {
     };
   }
 
+  //每次点击格子后进行两个操作：1.填格子 2.判断胜负
   handleClick(i) {
+    this.renderBox(i);
+    this.ifWin();
+  }
+
+  renderBox(i) {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
@@ -76,6 +82,12 @@ class Game extends React.Component {
     });
   }
 
+  ifWin() {
+    let win = true;
+    win = calculateFifteen(this.state.history[this.state.stepNumber]);
+    return win;
+  }
+
   jumpTo(step) {
     this.setState({
       stepNumber: step,
@@ -83,6 +95,8 @@ class Game extends React.Component {
     });
   }
 
+  /*该按钮为“游戏开始”和“再来一次”按钮
+    点击该按钮，将会显示新排行榜*/
   handleStartGameBtnClick() {
     if (!this.state.isStarted) {
       this.prepareNewGame();
@@ -100,6 +114,8 @@ class Game extends React.Component {
   startNewGame() {
     //每次开始新游戏之前需停止计时，否则将会一直暗中计时
     clearInterval(this.interval);
+    this.recordTime(this.state.second);
+    rankTime(this.state.record);
     this.startTimer();
     this.jumpTo(0);
     //TODO this.askForUserName();
@@ -120,10 +136,10 @@ class Game extends React.Component {
   }
 
   //把当前计时记入计时数组
-  recordTime(record) {
+  recordTime(second) {
     this.setState({
-      record: record.concat([{
-        second: this.state.second,
+      record: this.state.record.concat([{
+        second: second,
       }]),
     });
   }
@@ -133,7 +149,6 @@ class Game extends React.Component {
       'You are given 1-9 9 numbers, please put them in the boxes to make them add up to 15 in a row or in a line.';
     const history = this.state.history;
     const current = history[this.state.stepNumber];
-    const win = calculateFifteen(current.squares);
 
     const moves = history.map((step, move) => {
       const desc = move ?
@@ -147,26 +162,23 @@ class Game extends React.Component {
     });
 
     let status;
-    if (win) {
+    if (this.ifWin()) {
       status = 'Congratulations!';
       clearInterval(this.interval);
-      this.recordTime(this.state.record);
-      rankTime(this.state.record);
     } else {
       if (this.state.nextNum < 10) {
         status = 'Next number: ' + this.state.nextNum;
       } else {
         status = 'Game Over';
         clearInterval(this.interval);
-        this.recordTime(this.state.record);
-        rankTime(this.state.record);
       }
     }
 
-    const rank = this.state.record.map((second) => {
-      const ranking = second + 's';
+    const record = this.state.record;
+    const rank = record.map((recond) => {
+      const ranking = recond.second + 's'
       return (
-        <li key={second}>{ranking}</li>
+        <li key={recond}>{ranking}</li>
       );
     });
 
@@ -210,8 +222,8 @@ function calculateFifteen(squares) {
   let isWin = true;  //因为胜利条件比较苛刻，默认状态为胜利
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
-    if (squares[a] && squares[b] && squares[c]) {
-      if (squares[a] + squares[b] + squares[c] !== 15) {
+    if (squares.squares[a] && squares.squares[b] && squares.squares[c]) {
+      if (squares.squares[a] + squares.squares[b] + squares.squares[c] !== 15) {
         isWin = false;
         break;
       }
