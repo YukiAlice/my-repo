@@ -47,15 +47,17 @@ class Game extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      history: [{
-        squares: Array(9).fill(null)
-      }],
-      record: [{ second: 0 }],   //用于记录历史计时
+      history: [
+        {
+          squares: Array(9).fill(null)
+        }
+      ],
+      record: [0], //用于记录历史计时
       stepNumber: 0,
       nextNum: 1,
       isStarted: false,
       textForGameStartBtn: 'Game Start',
-      second: 0,
+      second: 0
     };
   }
 
@@ -74,24 +76,40 @@ class Game extends React.Component {
     }
     squares[i] = this.state.nextNum;
     this.setState({
-      history: history.concat([{
-        squares: squares,
-      }]),
+      history: history.concat([
+        {
+          squares: squares
+        }
+      ]),
       stepNumber: history.length,
-      nextNum: this.state.nextNum + 1,
+      nextNum: this.state.nextNum + 1
     });
   }
 
   ifWin() {
     let win = true;
+    let status;
     win = calculateFifteen(this.state.history[this.state.stepNumber]);
-    return win;
+    if (win) {
+      status = 'Congratulations!';
+      clearInterval(this.interval);
+      this.recordTime(this.state.second);                                //有问题，第九个格子点不动
+    } else {
+      if (this.state.nextNum < 10) {
+        status = 'Next number: ' + this.state.nextNum;
+      } else {
+        status = 'Game Over';
+        clearInterval(this.interval);
+        this.recordTime(this.state.second);                              //有问题，第九个格子点不动
+      }
+    }
+    return status;
   }
 
   jumpTo(step) {
     this.setState({
       stepNumber: step,
-      nextNum: step + 1,
+      nextNum: step + 1
     });
   }
 
@@ -107,15 +125,12 @@ class Game extends React.Component {
   prepareNewGame() {
     this.setState({
       isStarted: true,
-      textForGameStartBtn: 'Try Again',
+      textForGameStartBtn: 'Try Again'
     });
   }
 
   startNewGame() {
-    //每次开始新游戏之前需停止计时，否则将会一直暗中计时
-    clearInterval(this.interval);
-    this.recordTime(this.state.second);
-    rankTime(this.state.record);
+    //this.rankTime();
     this.startTimer();
     this.jumpTo(0);
     //TODO this.askForUserName();
@@ -124,23 +139,31 @@ class Game extends React.Component {
   //开始计时
   startTimer() {
     this.setState({
-      second: 0,
+      second: 0
     });
     this.interval = setInterval(() => this.countTime(), 1000);
   }
 
   countTime() {
     this.setState({
-      second: this.state.second + 1,
+      second: this.state.second + 1
     });
   }
 
   //把当前计时记入计时数组
   recordTime(second) {
+    if (second) {
+      //当second不为0时才计入数组record
+      this.setState({
+        record: this.state.record.concat([second])
+      });
+    }
+  }
+
+  rankTime() {
+    const recordcopy = recordSort(this.state.record);
     this.setState({
-      record: this.state.record.concat([{
-        second: second,
-      }]),
+      record: recordcopy
     });
   }
 
@@ -151,9 +174,7 @@ class Game extends React.Component {
     const current = history[this.state.stepNumber];
 
     const moves = history.map((step, move) => {
-      const desc = move ?
-        'Go to move #' + move :
-        'Go to game start';
+      const desc = move ? 'Go to move #' + move : 'Go to game start';
       return (
         <li key={move}>
           <button onClick={() => this.jumpTo(move)}>{desc}</button>
@@ -161,41 +182,31 @@ class Game extends React.Component {
       );
     });
 
-    let status;
-    if (this.ifWin()) {
-      status = 'Congratulations!';
-      clearInterval(this.interval);
-    } else {
-      if (this.state.nextNum < 10) {
-        status = 'Next number: ' + this.state.nextNum;
-      } else {
-        status = 'Game Over';
-        clearInterval(this.interval);
-      }
-    }
+    let status = this.ifWin();
 
     const record = this.state.record;
-    const rank = record.map((recond) => {
-      const ranking = recond.second + 's'
-      return (
-        <li key={recond}>{ranking}</li>
-      );
+    const rank = record.map((time, order) => {
+      //map函数两个参数，第一个是数组中的每个元素，第二个是索引（index）即数组下标
+      const ranking = record[order] + 's';
+      return <li key={order}>{ranking}</li>;
     });
 
     return (
       <div className="game">
         <div className="game-board">
-          <Board
-            squares={current.squares}
-            onClick={i => this.handleClick(i)}
-          />
+          <Board squares={current.squares} onClick={i => this.handleClick(i)} />
         </div>
         <div className="game-info">
           <div>{intro}</div>
           <div>{status}</div>
           <div>Time: {this.state.second} s</div>
           <div>
-            <button className="start-game-btn" onClick={() => this.handleStartGameBtnClick()}>{this.state.textForGameStartBtn}</button>
+            <button
+              className="start-game-btn"
+              onClick={() => this.handleStartGameBtnClick()}
+            >
+              {this.state.textForGameStartBtn}
+            </button>
           </div>
           <ol>{moves}</ol>
         </div>
@@ -219,7 +230,7 @@ function calculateFifteen(squares) {
     [0, 4, 8],
     [2, 4, 6]
   ];
-  let isWin = true;  //因为胜利条件比较苛刻，默认状态为胜利
+  let isWin = true; //因为胜利条件比较苛刻，默认状态为胜利
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
     if (squares.squares[a] && squares.squares[b] && squares.squares[c]) {
@@ -234,9 +245,17 @@ function calculateFifteen(squares) {
   return isWin;
 }
 
-//将历史计时进行排序的函数
-function rankTime(record) {
-
+//将历史计时进行排序的函数，不需要冒泡，记得改
+function recordSort(record) {
+  const recordcopy = record;
+  for (let i = 0; i < recordcopy.length; i++) {
+    for (let j = 0; j < recordcopy.length - i; j++) {
+      let para = recordcopy[j];
+      recordcopy[j] = recordcopy[j + 1];
+      recordcopy[j + 1] = para;
+    }
+  }
+  return recordcopy;
 }
 
 /*
