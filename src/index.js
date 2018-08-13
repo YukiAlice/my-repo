@@ -57,14 +57,16 @@ class Game extends React.Component {
       nextNum: 1,
       isStarted: false,
       textForGameStartBtn: 'Game Start',
-      second: 0
+      second: 0,
+      status: 'Please press the Game Start button'
     };
   }
 
   //每次点击格子后进行两个操作：1.填格子 2.判断胜负
   handleClick(i) {
-    this.renderBox(i);
-    this.ifWin();
+    if (this.renderBox(i)) {
+      this.ifWin();
+    }
   }
 
   renderBox(i) {
@@ -72,7 +74,7 @@ class Game extends React.Component {
     const current = history[history.length - 1];
     const squares = current.squares.slice();
     if (squares[i] || !this.state.isStarted) {
-      return;
+      return false;
     }
     squares[i] = this.state.nextNum;
     this.setState({
@@ -84,26 +86,33 @@ class Game extends React.Component {
       stepNumber: history.length,
       nextNum: this.state.nextNum + 1
     });
+    return true;
   }
 
   ifWin() {
-    let win = true;
-    let status;
-    win = calculateFifteen(this.state.history[this.state.stepNumber]);
+    const nextNum = this.state.nextNum + 1;
+    let win = calculateFifteen(this.state.history[this.state.stepNumber]);
     if (win) {
-      status = 'Congratulations!';
+      this.setState({
+        status: 'Comgratulations!'
+      });
       clearInterval(this.interval);
-      this.recordTime(this.state.second);                                //有问题，第九个格子点不动
+      this.recordTime(this.state.second);
+      //this.rankTime();
     } else {
-      if (this.state.nextNum < 10) {
-        status = 'Next number: ' + this.state.nextNum;
+      if (this.state.nextNum < 9) {
+        this.setState({
+          status: 'Next Number:' + nextNum
+        });
       } else {
-        status = 'Game Over';
+        this.setState({
+          status: 'Game Over'
+        });
         clearInterval(this.interval);
-        this.recordTime(this.state.second);                              //有问题，第九个格子点不动
+        this.recordTime(this.state.second);
+        //this.rankTime();
       }
     }
-    return status;
   }
 
   jumpTo(step) {
@@ -130,7 +139,6 @@ class Game extends React.Component {
   }
 
   startNewGame() {
-    //this.rankTime();
     this.startTimer();
     this.jumpTo(0);
     //TODO this.askForUserName();
@@ -160,18 +168,19 @@ class Game extends React.Component {
     }
   }
 
-  rankTime() {
-    const recordcopy = recordSort(this.state.record);
+  //将历史计数进行排序
+  /*rankTime() {
     this.setState({
       record: recordcopy
     });
-  }
+  }*/
 
   render() {
     const intro =
       'You are given 1-9 9 numbers, please put them in the boxes to make them add up to 15 in a row or in a line.';
     const history = this.state.history;
     const current = history[this.state.stepNumber];
+    const status = this.state.status;
 
     const moves = history.map((step, move) => {
       const desc = move ? 'Go to move #' + move : 'Go to game start';
@@ -181,8 +190,6 @@ class Game extends React.Component {
         </li>
       );
     });
-
-    let status = this.ifWin();
 
     const record = this.state.record;
     const rank = record.map((time, order) => {
@@ -243,19 +250,6 @@ function calculateFifteen(squares) {
     }
   }
   return isWin;
-}
-
-//将历史计时进行排序的函数，不需要冒泡，记得改
-function recordSort(record) {
-  const recordcopy = record;
-  for (let i = 0; i < recordcopy.length; i++) {
-    for (let j = 0; j < recordcopy.length - i; j++) {
-      let para = recordcopy[j];
-      recordcopy[j] = recordcopy[j + 1];
-      recordcopy[j + 1] = para;
-    }
-  }
-  return recordcopy;
 }
 
 /*
