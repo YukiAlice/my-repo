@@ -158,39 +158,20 @@ class Game extends React.Component {
 
   //把当前计时排序并记入计时数组
   recordTime(second) {
-    let record = this.state.record;
-    if (record[0] === 0) {
+    const records = this.state.record.slice();
+    if (records[0] === 0) {
       //把第一位的初值换成第一次游戏的成绩
-      record[0] = second;
-      this.setState({
-        record: record
-      });
+      records[0] = second;
     } else {
-      if (second) {
-        //当second不为0时才计入数组record
-        if (second >= record[record.length - 1]) {
-          //情况1：如果second比现存最大的记录都大
-          record = record.concat(second);
-        } else if (second <= record[0]) {
-          //情况2：如果second比现存最小的记录还小
-          record = record.concat(second);
-          for (let i = record.length - 1; i > 0; i--) {
-            record[i] = record[i - 1];
-          }
-          record[0] = second;
-        } else {
-          for (let j = 0; j < record.length; j++) {
-            //情况3：second位于记录中间，将second与record中的历史计时作比较，并插入到合适的位置
-            if (second >= record[j] && second <= record[j + 1]) {
-              record.splice(j + 1, 0, second);
-              break;
-            }
-          }
-        }
+      const index = records.findIndex(record => record >= second);
+      if (index === -1) {
+        records.push(second);
+      } else {
+        records.splice(index, 0, second);
       }
     }
     this.setState({
-      record: record
+      record: records
     });
   }
 
@@ -296,6 +277,26 @@ function calculateFifteen(squares) {
   this.startNewGame()
 
 可以用//TODO 记录暂时缺少的部分
+
+时间排序部分的循环方法
+function recordTime(currentRecord){
+  const records = this.state.records.slice();
+  if (records.length) {
+    let index = records.length - 1;
+    for (let i = 0;i < records.length; i++) {
+      if (records[i] >= currentRecord) {
+        index = i;
+        break;
+      }
+    }
+    records.splice(index, 0, currentRecord);
+  } else {
+    records.push(currentRecord);
+  }
+  this.setState({
+    records,
+  });
+}
 */
 
 // ========================================
