@@ -98,7 +98,6 @@ class Game extends React.Component {
       });
       clearInterval(this.interval);
       this.recordTime(this.state.second);
-      //this.rankTime();
     } else {
       if (this.state.nextNum < 9) {
         this.setState({
@@ -110,7 +109,6 @@ class Game extends React.Component {
         });
         clearInterval(this.interval);
         this.recordTime(this.state.second);
-        //this.rankTime();
       }
     }
   }
@@ -158,22 +156,43 @@ class Game extends React.Component {
     });
   }
 
-  //把当前计时记入计时数组
+  //把当前计时排序并记入计时数组
   recordTime(second) {
-    if (second) {
-      //当second不为0时才计入数组record
+    let record = this.state.record;
+    if (record[0] === 0) {
+      //把第一位的初值换成第一次游戏的成绩
+      record[0] = second;
       this.setState({
-        record: this.state.record.concat([second])
+        record: record
       });
+    } else {
+      if (second) {
+        //当second不为0时才计入数组record
+        if (second >= record[record.length - 1]) {
+          //情况1：如果second比现存最大的记录都大
+          record = record.concat(second);
+        } else if (second <= record[0]) {
+          //情况2：如果second比现存最小的记录还小
+          record = record.concat(second);
+          for (let i = record.length - 1; i > 0; i--) {
+            record[i] = record[i - 1];
+          }
+          record[0] = second;
+        } else {
+          for (let j = 0; j < record.length; j++) {
+            //情况3：second位于记录中间，将second与record中的历史计时作比较，并插入到合适的位置
+            if (second >= record[j] && second <= record[j + 1]) {
+              record.splice(j + 1, 0, second);
+              break;
+            }
+          }
+        }
+      }
     }
-  }
-
-  //将历史计数进行排序
-  /*rankTime() {
     this.setState({
-      record: recordcopy
+      record: record
     });
-  }*/
+  }
 
   render() {
     const intro =
