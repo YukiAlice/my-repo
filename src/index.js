@@ -4,19 +4,21 @@ import './index.css';
 
 function Square(props) {
   return (
-    <button className="square"
-      onClick={props.onClick}>
+    <button className="square" onClick={props.onClick}>
       {props.value}
     </button>
   );
-
 }
 
 class Board extends React.Component {
+  //每个地鼠洞
   renderSquare(i) {
-    return <Square
-      value={this.props.squares[i]}
-      onClick={() => this.props.onClick(i)} />;
+    return (
+      <Square
+        value={this.props.squares[i]}
+        onClick={() => this.props.onClick()}
+      />
+    );
   }
 
   render() {
@@ -46,72 +48,112 @@ class Game extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      history: [{
-        squares: Array(9).fill(null),
-      }],
-      stepNumber: 0,
-      xIsNext: true,
+      squares: Array(9).fill(null),
+      textForGameStartBtn: 'Game Start',
+      score: 0,
+      countDown: 10,
+      isStarted: false
     };
   }
 
-  handleClick(i) {
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
-    const squares = current.squares.slice();
-    if (calculateWinner(squares) || squares[i]) {
-      return;
-    }
-    squares[i] = this.state.xIsNext ? 'X' : 'O';
+  //随机选择一个地鼠洞，并钻出地鼠
+  moleAppear() {
+    const randomNum = Math.floor(Math.random() * this.state.squares.length);
+    const holes = Array(9).fill(null);
+    if (this.state.isStarted) holes[randomNum] = '鼠';
     this.setState({
-      history: history.concat([{
-        squares: squares,
-      }]),
-      stepNumber: history.length,
-      xIsNext: !this.state.xIsNext,
+      squares: holes
     });
   }
 
-  jumpTo(step) {
+  //处理点击开始按钮
+  handleStartGameBtnClick() {
+    if (!this.state.isStarted) {
+      this.prepareNewGame();
+    }
+    this.startNewGame();
+  }
+
+  //每次开始游戏前准备工作
+  prepareNewGame() {
     this.setState({
-      stepNumber: step,
-      xIsNext: (step % 2) === 0,
+      isStarted: true,
+      score: 0,
+      countDown: 10,
+      textForGameStartBtn: 'Try Again'
     });
+  }
+
+  //开始新游戏
+  startNewGame() {
+    clearInterval(this.interval);
+    this.startCountDown();
+  }
+
+  //开始倒计时
+  startCountDown() {
+    this.setState({
+      squares: Array(9).fill(null),
+      countDown: 10
+    });
+    this.interval = setInterval(() => {
+      this.countTime();
+      this.moleAppear();
+    }, 1000);
+  }
+
+  countTime() {
+    if (!this.state.countDown) {
+      this.gameOver();
+      return false;
+    }
+    this.setState({
+      countDown: this.state.countDown - 1
+    });
+  }
+
+  gameOver() {
+    clearInterval(this.interval);
+    this.setState({
+      isStarted: false,
+      textForGameStartBtn: 'Game Start'
+    });
+  }
+
+  //鼠标点击处理：判断是否打中=>计算得分
+  handleClick(i) {
+    if (this.state.squares[i] === '鼠')
+      this.setState({
+        score: this.state.score + 1
+      });
   }
 
   render() {
-    const history = this.state.history;
-    const current = history[this.state.stepNumber];
-    const winner = calculateWinner(current.squares);
-
-    const moves = history.map((step, move) => {
-      const desc = move ?
-        'Go to move #' + move :
-        'Go to game start';
-      return (
-        <li key={move}>
-          <button onClick={() => this.jumpTo(move)}>{desc}</button>
-        </li>
-      );
-    });
-
-    let status;
-    if (winner) {
-      status = "Winner:" + winner;
-    } else {
-      status = 'Next player:' + (this.state.xIsNext ? 'X' : 'O');
-    }
+    const intro = 'Whac-A-Mole';
 
     return (
       <div className="game">
         <div className="game-board">
           <Board
-            squares={current.squares}
-            onClick={(i) => this.handleClick(i)}
+            squares={this.state.squares}
+            onClick={i => this.handleClick(i)}
           />
         </div>
         <div className="game-info">
-          <div>{status}</div>
-          <ol>{moves}</ol>
+          <div>{intro}</div>
+          <div>Score: {this.state.score}</div>
+          <div>
+            CountDown：
+            {this.state.countDown} s
+          </div>
+          <div>
+            <button
+              className="start-game-btn"
+              onClick={() => this.handleStartGameBtnClick()}
+            >
+              {this.state.textForGameStartBtn}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -120,27 +162,7 @@ class Game extends React.Component {
 
 // ========================================
 
-ReactDOM.render(
-  <Game />,
-  document.getElementById('root')
-);
+ReactDOM.render(<Game />, document.getElementById('root'));
 
-function calculateWinner(squares) {
-  const lines = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-  ];
-  for (let i = 0; i < lines.length; i++) {
-    const [a, b, c] = lines[i];
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return squares[a];
-    }
-  }
-  return null;
-}
+// WEBPACK FOOTER //
+// src/index.js
